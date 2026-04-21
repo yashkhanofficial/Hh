@@ -6,35 +6,31 @@
 </head>
 <body>
     <div class="container">
-        <h2>Create Item Profile</h2>
+        <a href="index.html">← Back</a>
+        <h2>➕ Create Product</h2>
         <div class="card">
-            <input type="text" id="p-name" placeholder="Item Name (e.g. Lux Soap)">
-            <button onclick="saveProfile()" class="btn-primary">Save Profile</button>
+            <input type="text" id="p-name" placeholder="Product Name">
+            <input type="text" id="p-barcode" placeholder="Barcode (Scan or Type)">
+            <input type="text" id="p-cat" placeholder="Category">
+            <button onclick="addNewProduct()" class="btn-primary">Save Profile</button>
         </div>
-        <div id="profile-list"></div>
+        <h3>Registered List</h3>
+        <div id="p-list-container"></div>
     </div>
-
-    <div class="fab-nav">
-        <a href="index.html" class="nav-item">🏠<br>Home</a>
-        <a href="products.html" class="nav-item active">📋<br>Profiles</a>
-        <a href="add-stock.html" class="nav-item">📦<br>Add</a>
-        <a href="scanner.html" class="nav-item">📷<br>Scan</a>
-    </div>
-
+    <script src="js/logic.js"></script>
     <script>
-        function saveProfile() {
+        window.onload = renderProductList;
+        function addNewProduct() {
             const name = document.getElementById('p-name').value;
-            if(!name) return;
-            const profiles = JSON.parse(localStorage.getItem('he_products') || '[]');
-            profiles.push({ id: Date.now(), name });
-            localStorage.setItem('he_products', JSON.stringify(profiles));
+            const barcode = document.getElementById('p-barcode').value;
+            const category = document.getElementById('p-cat').value;
+            if(!name || !barcode) return alert("Fill Name and Barcode!");
+
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            products.push({ id: Date.now(), name, barcode, category });
+            localStorage.setItem('products', JSON.stringify(products));
             location.reload();
         }
-
-        const list = JSON.parse(localStorage.getItem('he_products') || '[]');
-        list.forEach(p => {
-            document.getElementById('profile-list').innerHTML += `<div class="card">${p.name}</div>`;
-        });
     </script>
 </body>
 </html>

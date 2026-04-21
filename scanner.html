@@ -1,57 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-        <a href="index.html">← Back</a>
-        <h1>Search & Sell</h1>
+        <h2>📷 Quick Scan Sale</h2>
         <div class="card">
-            <input type="text" id="scan-input" placeholder="Enter Product Code">
-            <button onclick="search()" class="btn-primary">Search</button>
+            <input type="text" id="scan-sell" placeholder="Scan Unit Barcode to Sell..." autofocus oninput="processSale(this.value)">
         </div>
-        <div id="res" class="card" style="display:none;">
-            <h2 id="res-name"></h2>
-            <p id="res-stock"></p>
-            <button onclick="sell()" class="btn-primary" style="background:red;">Sell 1 Unit</button>
-        </div>
+        <div id="sale-info"></div>
+    </div>
+
+    <div class="fab-nav">
+        <a href="index.html" class="nav-item">🏠<br>Home</a>
+        <a href="products.html" class="nav-item">📋<br>Profiles</a>
+        <a href="add-stock.html" class="nav-item">📦<br>Add</a>
+        <a href="scanner.html" class="nav-item active">📷<br>Scan</a>
     </div>
 
     <script>
-        let foundProductId = null;
+        function processSale(code) {
+            if(!code) return;
+            let stocks = JSON.parse(localStorage.getItem('he_stocks') || '[]');
+            const index = stocks.findIndex(s => s.unitCode === code);
 
-        function search() {
-            const code = document.getElementById('scan-input').value;
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            const p = products.find(x => x.code === code);
-
-            if(p) {
-                foundProductId = p.id;
-                document.getElementById('res-name').innerText = p.name;
-                document.getElementById('res').style.display = "block";
+            if(index > -1) {
+                const soldItem = stocks[index];
+                document.getElementById('sale-info').innerHTML = `
+                    <div class="card" style="border-left: 5px solid green">
+                        <h3 style="color:green">✅ SOLD!</h3>
+                        <b>${soldItem.pName}</b><br>
+                        Code: ${soldItem.unitCode}<br>
+                        Expiry: ${soldItem.expiry}
+                    </div>`;
                 
-                const batches = JSON.parse(localStorage.getItem('batches') || '[]');
-                const stock = batches.filter(b => b.productId == p.id).reduce((sum, b) => sum + b.quantity, 0);
-                document.getElementById('res-stock').innerText = "Stock: " + stock;
-            } else { alert("Not found!"); }
-        }
-
-        function sell() {
-            let batches = JSON.parse(localStorage.getItem('batches') || '[]');
-            // FIFO Logic: Sort by date
-            batches.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
-            
-            const batchIndex = batches.findIndex(b => b.productId == foundProductId && b.quantity > 0);
-            if(batchIndex > -1) {
-                batches[batchIndex].quantity -= 1;
-                localStorage.setItem('batches', JSON.stringify(batches));
-                alert("Sold!");
-                search();
-            } else { alert("No Stock!"); }
+                stocks.splice(index, 1); // Remove from stock
+                localStorage.setItem('he_stocks', JSON.stringify(stocks));
+                document.getElementById('scan-sell').value = ""; // Ready for next scan
+            }
         }
     </script>
 </body>

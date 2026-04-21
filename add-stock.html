@@ -3,67 +3,60 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
 <body>
     <div class="container">
-        <h2>📦 Add Stock (Unit by Unit)</h2>
+        <a href="index.html">← Back</a>
+        <h2>📦 Add Piece by Piece</h2>
+        
         <div class="card">
-            <label>Select Item Profile:</label>
+            <video id="video" style="width:100%; border-radius:10px; background:black;"></video>
+            <p id="cam-status" style="font-size:10px; color:gray;">Camera Active...</p>
+        </div>
+
+        <div class="card">
+            <label>Select Item:</label>
             <select id="p-select"></select>
-            
             <label>Expiry Date:</label>
             <input type="date" id="exp-date">
-
-            <label>Unit Barcode/Code:</label>
-            <input type="text" id="unit-code" placeholder="Scan or Type Code">
-            
-            <button onclick="addUnit()" class="btn-primary">Add This Piece</button>
+            <label>Unit Code:</label>
+            <input type="text" id="unit-code" placeholder="Scanned Code will appear here">
+            <button onclick="addUnit()" class="btn-primary">Add Unit to Stock</button>
         </div>
-        <div id="recent-added"></div>
     </div>
 
-    <div class="fab-nav">
-        <a href="index.html" class="nav-item">🏠<br>Home</a>
-        <a href="products.html" class="nav-item">📋<br>Profiles</a>
-        <a href="add-stock.html" class="nav-item active">📦<br>Add</a>
-        <a href="scanner.html" class="nav-item">📷<br>Scan</a>
-    </div>
-
+    <script src="js/logic.js"></script>
     <script>
-        const profiles = JSON.parse(localStorage.getItem('he_products') || '[]');
-        const select = document.getElementById('p-select');
-        profiles.forEach(p => select.innerHTML += `<option value="${p.id}">${p.name}</option>`);
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+        codeReader.decodeFromVideoDevice(null, 'video', (result) => {
+            if (result) {
+                document.getElementById('unit-code').value = result.text;
+                // Optional: Auto-click add if you want fast adding
+            }
+        });
+
+        window.onload = () => {
+            const db = getDB();
+            const select = document.getElementById('p-select');
+            db.products.forEach(p => select.innerHTML += `<option value="${p.id}">${p.name}</option>`);
+        };
 
         function addUnit() {
-            const stocks = JSON.parse(localStorage.getItem('he_stocks') || '[]');
+            const db = getDB();
             const code = document.getElementById('unit-code').value;
             const date = document.getElementById('exp-date').value;
+            const pId = document.getElementById('p-select').value;
+            const pName = document.getElementById('p-select').options[document.getElementById('p-select').selectedIndex].text;
 
-            if(!code || !date) return alert("Fill all data!");
+            if(!code || !date) return alert("Fill Code and Date!");
+            if(db.stocks.find(s => s.code === code)) return alert("This Code already added!");
 
-            // Check if code exists
-            if(stocks.find(s => s.unitCode === code)) return alert("This Code already exists!");
-
-            stocks.push({
-                unitCode: code,
-                pId: select.value,
-                pName: select.options[select.selectedIndex].text,
-                expiry: date
-            });
-
-            localStorage.setItem('he_stocks', JSON.stringify(stocks));
-            document.getElementById('unit-code').value = ""; // Clear for next scan
+            db.stocks.push({ code, pId, pName, expiry: date });
+            saveDB(db);
+            document.getElementById('unit-code').value = "";
             alert("Added!");
-            renderRecent();
         }
-
-        function renderRecent() {
-            const stocks = JSON.parse(localStorage.getItem('he_stocks') || '[]');
-            const recent = stocks.slice(-5).reverse();
-            document.getElementById('recent-added').innerHTML = "<h3>Recently Added</h3>" + 
-                recent.map(s => `<div class="card">${s.pName} - ${s.unitCode}</div>`).join('');
-        }
-        renderRecent();
     </script>
 </body>
 </html>

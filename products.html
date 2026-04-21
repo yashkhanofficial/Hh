@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Product</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html">← Back to Dashboard</a>
+        <h1>Register New Product</h1>
+        <div class="card">
+            <input type="text" id="prod-name" placeholder="Product Name (e.g. Chips)">
+            <input type="text" id="prod-barcode" placeholder="Barcode Number">
+            <button id="btn-save-prod" class="btn-primary">Save Product</button>
+        </div>
+
+        <h2>Registered Products</h2>
+        <div id="product-list-container"></div>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase.js';
+        import { collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const btnSave = document.getElementById('btn-save-prod');
+
+        // Product Save Logic
+        btnSave.onclick = async () => {
+            const name = document.getElementById('prod-name').value;
+            const barcode = document.getElementById('prod-barcode').value;
+
+            if(!name || !barcode) return alert("Please fill name and barcode!");
+
+            try {
+                await addDoc(collection(db, "products"), {
+                    name: name,
+                    barcode: barcode,
+                    createdAt: new Date()
+                });
+                alert("Product Saved Successfully!");
+                location.reload();
+            } catch (e) { alert("Error: " + e.message); }
+        };
+
+        // Product List Load
+        async function loadProducts() {
+            const snap = await getDocs(collection(db, "products"));
+            const container = document.getElementById('product-list-container');
+            container.innerHTML = "";
+            snap.forEach(doc => {
+                const p = doc.data();
+                container.innerHTML += `<div class="card"><b>${p.name}</b> <br> Barcode: ${p.barcode}</div>`;
+            });
+        }
+        loadProducts();
+    </script>
+</body>
+</html>

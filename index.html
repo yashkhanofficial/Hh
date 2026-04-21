@@ -3,42 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy Expire - Dashboard</title>
+    <title>Happy Expire - Local Store</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <nav class="navbar">
-        <span class="logo">⌛ Happy Expire</span>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="products.html">Products</a>
-            <a href="scanner.html">Scanner</a>
-        </div>
+        <span class="logo">⌛ Happy Expire (Offline)</span>
     </nav>
 
     <div class="container">
         <div class="stats-grid">
-            <div class="stat-card">Critical: <span id="count-red" class="text-critical">0</span></div>
-            <div class="stat-card">Warning: <span id="count-yellow" class="text-warning">0</span></div>
+            <div class="stat-card">Critical (3d): <span id="count-red" class="text-critical">0</span></div>
+            <div class="stat-card">Warning (7d): <span id="count-yellow" class="text-warning">0</span></div>
         </div>
 
         <h2>Expiry Alerts</h2>
-        <div class="alert-section">
-            <h3 class="text-critical">🔴 Critical (3 Days)</h3>
-            <div id="list-3-days" class="alert-list"></div>
-            
-            <h3 class="text-warning">🟡 Warning (7 Days)</h3>
-            <div id="list-7-days" class="alert-list"></div>
-            
-            <h3 class="text-safe">🟢 Upcoming (30 Days)</h3>
-            <div id="list-30-days" class="alert-list"></div>
-        </div>
+        <div id="alert-container">
+            </div>
 
         <div class="fab-container">
-            <a href="scanner.html" class="fab">📷 Scan & Sell</a>
+            <a href="scanner.html" class="fab">📷 Scan/Sell</a>
+            <a href="products.html" class="fab">📝 New Product</a>
             <a href="add-batch.html" class="fab">📦 Add Stock</a>
         </div>
     </div>
-    <script type="module" src="js/dashboard.js"></script>
+
+    <script>
+        function loadDashboard() {
+            const batches = JSON.parse(localStorage.getItem('batches') || '[]');
+            const now = new Date();
+            const alertBox = document.getElementById('alert-container');
+            let red = 0, yellow = 0;
+
+            alertBox.innerHTML = "";
+
+            batches.forEach(batch => {
+                const expDate = new Date(batch.expiryDate);
+                const diffTime = expDate - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (batch.quantity > 0 && diffDays <= 30) {
+                    let type = "border-30";
+                    if (diffDays <= 3) { type = "border-3"; red++; }
+                    else if (diffDays <= 7) { type = "border-7"; yellow++; }
+
+                    alertBox.innerHTML += `
+                        <div class="alert-item ${type}">
+                            <div><b>${batch.productName}</b><br><small>Stock: ${batch.quantity}</small></div>
+                            <div class="${diffDays <= 3 ? 'text-critical' : ''}">${diffDays} days left</div>
+                        </div>`;
+                }
+            });
+            document.getElementById('count-red').innerText = red;
+            document.getElementById('count-yellow').innerText = yellow;
+        }
+        window.onload = loadDashboard;
+    </script>
 </body>
 </html>

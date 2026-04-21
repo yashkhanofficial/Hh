@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Stock</title>
+    <title>Add Stock & Expiry</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-        <a href="index.html">← Back</a>
-        <h1>Add Stock (Inventory)</h1>
+        <a href="index.html">← Dashboard</a>
+        <h1>Add Stock & Expiry</h1>
         <div class="card">
-            <label>Select Product:</label>
-            <select id="select-product"><option>Loading...</option></select>
+            <label>Select Product Profile:</label>
+            <select id="product-select"><option>Loading...</option></select>
             
             <label>Expiry Date:</label>
-            <input type="date" id="expiry-date">
+            <input type="date" id="exp-date">
             
             <label>Quantity:</label>
-            <input type="number" id="quantity" placeholder="Ex: 50">
+            <input type="number" id="qty" placeholder="পরিমাণ লিখুন">
             
-            <button id="btn-save-batch" class="btn-primary">Add to Stock</button>
+            <button id="btn-add-stock" class="btn-primary">Add to Inventory</button>
         </div>
     </div>
 
@@ -28,14 +28,13 @@
         import { db } from './js/firebase.js';
         import { collection, getDocs, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const select = document.getElementById('select-product');
-        
-        // Dropdown-e product list ana
-        async function loadProds() {
+        const select = document.getElementById('product-select');
+
+        async function loadProducts() {
             const snap = await getDocs(collection(db, "products"));
             select.innerHTML = "";
             if(snap.empty) {
-                select.innerHTML = "<option>No product found! Add product first.</option>";
+                select.innerHTML = "<option>No Profile Found! Create Profile first.</option>";
                 return;
             }
             snap.forEach(doc => {
@@ -43,23 +42,25 @@
             });
         }
 
-        document.getElementById('btn-save-batch').onclick = async () => {
-            const dateVal = document.getElementById('expiry-date').value;
-            const qty = document.getElementById('quantity').value;
+        document.getElementById('btn-add-stock').onclick = async () => {
+            const date = document.getElementById('exp-date').value;
+            const quantity = document.getElementById('qty').value;
 
-            if(!dateVal || !qty) return alert("Date and Quantity are required!");
+            if(!date || !quantity) return alert("তারিখ এবং পরিমাণ দিন!");
 
-            await addDoc(collection(db, "batches"), {
-                productId: select.value,
-                productName: select.options[select.selectedIndex].text,
-                expiryDate: Timestamp.fromDate(new Date(dateVal)),
-                quantity: parseInt(qty),
-                createdAt: new Date()
-            });
-            alert("Stock Updated!");
-            window.location.href = "index.html";
+            try {
+                await addDoc(collection(db, "batches"), {
+                    productId: select.value,
+                    productName: select.options[select.selectedIndex].text,
+                    expiryDate: Timestamp.fromDate(new Date(date)),
+                    quantity: parseInt(quantity),
+                    createdAt: new Date()
+                });
+                alert("স্টক যোগ হয়েছে!");
+                window.location.href = "index.html";
+            } catch (e) { alert("Error: " + e.message); }
         };
-        loadProds();
+        loadProducts();
     </script>
 </body>
 </html>

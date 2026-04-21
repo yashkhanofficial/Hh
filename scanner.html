@@ -6,39 +6,28 @@
 </head>
 <body>
     <div class="container">
-        <h2>📷 Quick Scan Sale</h2>
+        <a href="index.html">← Back</a>
+        <h2>📷 Scan to Sell (FIFO)</h2>
         <div class="card">
-            <input type="text" id="scan-sell" placeholder="Scan Unit Barcode to Sell..." autofocus oninput="processSale(this.value)">
+            <input type="text" id="scan-input" placeholder="Scan Barcode..." autofocus oninput="handleScan(this.value)">
         </div>
-        <div id="sale-info"></div>
+        <div id="sale-result"></div>
     </div>
-
-    <div class="fab-nav">
-        <a href="index.html" class="nav-item">🏠<br>Home</a>
-        <a href="products.html" class="nav-item">📋<br>Profiles</a>
-        <a href="add-stock.html" class="nav-item">📦<br>Add</a>
-        <a href="scanner.html" class="nav-item active">📷<br>Scan</a>
-    </div>
-
+    <script src="js/logic.js"></script>
     <script>
-        function processSale(code) {
-            if(!code) return;
-            let stocks = JSON.parse(localStorage.getItem('he_stocks') || '[]');
-            const index = stocks.findIndex(s => s.unitCode === code);
-
-            if(index > -1) {
-                const soldItem = stocks[index];
-                document.getElementById('sale-info').innerHTML = `
-                    <div class="card" style="border-left: 5px solid green">
-                        <h3 style="color:green">✅ SOLD!</h3>
-                        <b>${soldItem.pName}</b><br>
-                        Code: ${soldItem.unitCode}<br>
-                        Expiry: ${soldItem.expiry}
+        function handleScan(code) {
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            const prod = products.find(p => p.barcode === code);
+            if(prod) {
+                const success = processFIFOSale(prod.id);
+                if(success) {
+                    document.getElementById('sale-result').innerHTML = `
+                    <div class="card" style="background:#dcfce7; border:2px solid green;">
+                        <h3>✅ Sold: ${prod.name}</h3>
+                        <p>Stock updated automatically.</p>
                     </div>`;
-                
-                stocks.splice(index, 1); // Remove from stock
-                localStorage.setItem('he_stocks', JSON.stringify(stocks));
-                document.getElementById('scan-sell').value = ""; // Ready for next scan
+                    document.getElementById('scan-input').value = "";
+                }
             }
         }
     </script>

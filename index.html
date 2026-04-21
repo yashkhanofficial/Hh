@@ -3,35 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy Expire - Offline POS</title>
+    <title>Happy Expire - Pro Offline</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="navbar">HAPPY EXPIRE (OFFLINE)</div>
+    <div class="navbar">HAPPY EXPIRE PRO</div>
     
     <div class="container">
         <div class="stat-grid">
             <div class="stat-item">Products <span id="total-p">0</span></div>
-            <div class="stat-item">Total Stock <span id="total-s">0</span></div>
+            <div class="stat-item">Unit Stock <span id="total-s">0</span></div>
         </div>
 
-        <h2 class="text-critical">🔴 Critical (3 Days)</h2>
-        <div id="list-3" class="alert-list"></div>
-
-        <h2 class="text-warning">🟡 Warning (7 Days)</h2>
-        <div id="list-7" class="alert-list"></div>
-
-        <h2 class="text-safe">🟢 Upcoming (30 Days)</h2>
-        <div id="list-30" class="alert-list"></div>
+        <h2>🔴 Expiry Alerts (30 Days)</h2>
+        <div id="alert-container"></div>
         
-        <button onclick="exportData()" class="btn-secondary" style="margin-top:20px;">💾 Backup Data (JSON)</button>
+        <hr>
+        <div class="card">
+            <h3>Backup & Restore</h3>
+            <button onclick="exportData()" class="btn-secondary">💾 Download Backup</button>
+            <p style="font-size: 12px; margin-top: 10px;">Restore Data (Select Backup File):</p>
+            <input type="file" id="importFile" onchange="importData(event)" style="font-size: 12px;">
+        </div>
     </div>
 
     <div class="fab-nav">
         <a href="index.html" class="nav-item active">🏠<br>Home</a>
-        <a href="products.html" class="nav-item">📋<br>Add Item</a>
-        <a href="add-batch.html" class="nav-item">📦<br>Add Stock</a>
-        <a href="scanner.html" class="nav-item">📷<br>Scan/Sell</a>
+        <a href="products.html" class="nav-item">📋<br>Profiles</a>
+        <a href="add-stock.html" class="nav-item">📦<br>Add Stock</a>
+        <a href="scanner.html" class="nav-item">📷<br>Sale</a>
     </div>
 
     <script src="js/logic.js"></script>
@@ -40,19 +40,30 @@
             updateStats();
             renderDashboardAlerts();
         };
-        
+
         function exportData() {
-            const data = {
-                products: JSON.parse(localStorage.getItem('products') || '[]'),
-                batches: JSON.parse(localStorage.getItem('batches') || '[]'),
-                sales: JSON.parse(localStorage.getItem('sales') || '[]')
-            };
-            const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
-            const url = URL.createObjectURL(blob);
+            const data = localStorage.getItem('he_pro_data') || '{}';
+            const blob = new Blob([data], {type: "application/json"});
             const a = document.createElement('a');
-            a.href = url;
-            a.download = `backup_${new Date().toLocaleDateString()}.json`;
+            a.href = URL.createObjectURL(blob);
+            a.download = `HappyExpire_Backup_${new Date().toLocaleDateString()}.json`;
             a.click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                try {
+                    JSON.parse(content); // Validate JSON
+                    localStorage.setItem('he_pro_data', content);
+                    alert("Data Restored Successfully!");
+                    location.reload();
+                } catch (err) { alert("Invalid Backup File!"); }
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>

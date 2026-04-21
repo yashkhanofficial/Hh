@@ -3,31 +3,42 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
 <body>
     <div class="container">
         <a href="index.html">← Back</a>
-        <h2>📷 Scan to Sell (FIFO)</h2>
+        <h2>📷 Quick Scan Sale</h2>
         <div class="card">
-            <input type="text" id="scan-input" placeholder="Scan Barcode..." autofocus oninput="handleScan(this.value)">
+            <video id="video-sale" style="width:100%; border-radius:10px; background:black;"></video>
         </div>
-        <div id="sale-result"></div>
+        <div class="card">
+            <input type="text" id="manual-code" placeholder="Manual Code">
+            <button onclick="sellByCode(document.getElementById('manual-code').value)" class="btn-primary">Sell Manual</button>
+        </div>
+        <div id="sale-msg"></div>
     </div>
+
     <script src="js/logic.js"></script>
     <script>
-        function handleScan(code) {
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            const prod = products.find(p => p.barcode === code);
-            if(prod) {
-                const success = processFIFOSale(prod.id);
-                if(success) {
-                    document.getElementById('sale-result').innerHTML = `
-                    <div class="card" style="background:#dcfce7; border:2px solid green;">
-                        <h3>✅ Sold: ${prod.name}</h3>
-                        <p>Stock updated automatically.</p>
-                    </div>`;
-                    document.getElementById('scan-input').value = "";
-                }
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+        codeReader.decodeFromVideoDevice(null, 'video-sale', (result) => {
+            if (result) {
+                sellByCode(result.text);
+            }
+        });
+
+        function sellByCode(code) {
+            const db = getDB();
+            const index = db.stocks.findIndex(s => s.code === code);
+            if(index > -1) {
+                const item = db.stocks[index];
+                db.stocks.splice(index, 1);
+                saveDB(db);
+                document.getElementById('sale-msg').innerHTML = `<div class="card" style="border-left:5px solid green;">Sold: ${item.pName} (${item.code})</div>`;
+                alert("Sale Success!");
+            } else {
+                alert("Product Not Found in Stock!");
             }
         }
     </script>

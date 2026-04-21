@@ -1,0 +1,24 @@
+:root {
+    --primary: #2563eb;
+    --critical: #dc2626;
+    --warning: #f59e0b;
+    --safe: #10b981;
+    --white: #ffffff;
+}
+body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding-bottom: 100px; }
+.navbar { background: #1e293b; color: white; padding: 1rem; display: flex; justify-content: space-between; }
+.nav-links a { color: white; text-decoration: none; margin-left: 10px; font-size: 14px; }
+.container { padding: 15px; max-width: 500px; margin: auto; }
+.card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; outline: none; }
+.btn-primary { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-card { background: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; }
+.alert-item { background: white; padding: 10px; border-left: 6px solid #ddd; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.border-3 { border-color: var(--critical); }
+.border-7 { border-color: var(--warning); }
+.border-30 { border-color: var(--safe); }
+.text-critical { color: var(--critical); }
+.text-warning { color: var(--warning); }
+.fab-container { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 15px; border-top: 1px solid #ddd; }
+.fab { background: var(--primary); color: white; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; }

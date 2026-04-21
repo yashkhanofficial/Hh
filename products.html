@@ -7,28 +7,41 @@
 <body>
     <div class="container">
         <a href="index.html">← Back</a>
-        <h2>➕ Create Product</h2>
+        <h2>📋 Product Profiles</h2>
         <div class="card">
-            <input type="text" id="p-name" placeholder="Product Name">
-            <input type="text" id="p-barcode" placeholder="Barcode (Scan or Type)">
-            <input type="text" id="p-cat" placeholder="Category">
-            <button onclick="addNewProduct()" class="btn-primary">Save Profile</button>
+            <input type="text" id="p-name" placeholder="Item Name (Ex: Lux Soap)">
+            <button onclick="saveProfile()" class="btn-primary">Save Profile</button>
         </div>
-        <h3>Registered List</h3>
-        <div id="p-list-container"></div>
+        <h3>Existing Profiles</h3>
+        <div id="profile-list"></div>
     </div>
     <script src="js/logic.js"></script>
     <script>
-        window.onload = renderProductList;
-        function addNewProduct() {
+        window.onload = renderProfiles;
+        function saveProfile() {
             const name = document.getElementById('p-name').value;
-            const barcode = document.getElementById('p-barcode').value;
-            const category = document.getElementById('p-cat').value;
-            if(!name || !barcode) return alert("Fill Name and Barcode!");
-
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            products.push({ id: Date.now(), name, barcode, category });
-            localStorage.setItem('products', JSON.stringify(products));
+            if(!name) return;
+            const db = getDB();
+            db.products.push({ id: Date.now(), name });
+            saveDB(db);
+            location.reload();
+        }
+        function renderProfiles() {
+            const db = getDB();
+            const container = document.getElementById('profile-list');
+            container.innerHTML = db.products.map(p => `
+                <div class="card item-row">
+                    <span>${p.name}</span>
+                    <button onclick="deleteProduct(${p.id})" style="width:auto; background:red; padding:5px 10px;">Delete</button>
+                </div>
+            `).join('');
+        }
+        function deleteProduct(id) {
+            if(!confirm("Are you sure? It will delete all stock for this product!")) return;
+            const db = getDB();
+            db.products = db.products.filter(p => p.id !== id);
+            db.stocks = db.stocks.filter(s => s.pId != id);
+            saveDB(db);
             location.reload();
         }
     </script>

@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Product</title>
+    <title>Product Profile</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-        <a href="index.html">← Back to Dashboard</a>
-        <h1>Register New Product</h1>
+        <a href="index.html">← Dashboard</a>
+        <h1>Create Product Profile</h1>
         <div class="card">
-            <input type="text" id="prod-name" placeholder="Product Name (e.g. Chips)">
-            <input type="text" id="prod-barcode" placeholder="Barcode Number">
-            <button id="btn-save-prod" class="btn-primary">Save Product</button>
+            <label>Product Name:</label>
+            <input type="text" id="prod-name" placeholder="যেমন: মশা মারার স্প্রে">
+            
+            <label>Product Code / Barcode:</label>
+            <input type="text" id="prod-barcode" placeholder="যেমন: 123456">
+            
+            <button id="btn-save-prod" class="btn-primary">Save Profile</button>
         </div>
 
-        <h2>Registered Products</h2>
-        <div id="product-list-container"></div>
+        <h3>Registered Products:</h3>
+        <div id="product-list"></div>
     </div>
 
     <script type="module">
@@ -26,35 +30,31 @@
 
         const btnSave = document.getElementById('btn-save-prod');
 
-        // Product Save Logic
         btnSave.onclick = async () => {
             const name = document.getElementById('prod-name').value;
-            const barcode = document.getElementById('prod-barcode').value;
+            const code = document.getElementById('prod-barcode').value;
 
-            if(!name || !barcode) return alert("Please fill name and barcode!");
+            if(!name || !code) return alert("নাম এবং কোড দুটোই দিন!");
 
             try {
                 await addDoc(collection(db, "products"), {
                     name: name,
-                    barcode: barcode,
+                    barcode: code,
                     createdAt: new Date()
                 });
-                alert("Product Saved Successfully!");
+                alert("প্রোফাইল সেভ হয়েছে!");
                 location.reload();
             } catch (e) { alert("Error: " + e.message); }
         };
 
-        // Product List Load
-        async function loadProducts() {
+        async function load() {
             const snap = await getDocs(collection(db, "products"));
-            const container = document.getElementById('product-list-container');
-            container.innerHTML = "";
+            const list = document.getElementById('product-list');
             snap.forEach(doc => {
-                const p = doc.data();
-                container.innerHTML += `<div class="card"><b>${p.name}</b> <br> Barcode: ${p.barcode}</div>`;
+                list.innerHTML += `<div class="card"><b>${doc.data().name}</b> (Code: ${doc.data().barcode})</div>`;
             });
         }
-        loadProducts();
+        load();
     </script>
 </body>
 </html>

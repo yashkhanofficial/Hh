@@ -5,48 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scanner - Happy Expire</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
 <body>
     <div class="container">
         <a href="index.html">← Back</a>
-        <h1>Scan/Sell Product</h1>
+        <h1>Scan Barcode</h1>
+        
         <div class="card">
-            <input type="text" id="barcode-input" placeholder="Enter or Scan Barcode">
+            <video id="video" style="width: 100%; border-radius: 10px; background: #000;"></video>
+        </div>
+
+        <div class="card">
+            <input type="text" id="barcode-input" placeholder="Scanning or Manual Input...">
             <button id="btn-find" class="btn-primary">Find Product</button>
         </div>
+
         <div id="result" class="card" style="display:none;">
             <h2 id="res-name"></h2>
-            <p>Total Stock: <span id="res-stock"></span></p>
-            <button id="btn-sell" class="btn-primary" style="background: #e11d48;">Sell 1 Unit (FIFO)</button>
+            <button id="btn-sell" class="btn-primary" style="background: red;">Sell 1 Unit</button>
         </div>
     </div>
+
     <script type="module">
         import { db } from './js/firebase.js';
         import { collection, query, where, getDocs, updateDoc, doc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const btnFind = document.getElementById('btn-find');
-        const resDiv = document.getElementById('result');
-        let currentProdId = "";
+        const codeReader = new ZXing.BrowserMultiFormatReader();
+        const barcodeInput = document.getElementById('barcode-input');
 
-        btnFind.onclick = async () => {
-            const code = document.getElementById('barcode-input').value;
+        // Start Camera
+        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+            if (result) {
+                barcodeInput.value = result.text;
+                findProduct(result.text);
+            }
+        });
+
+        async function findProduct(code) {
             const q = query(collection(db, "products"), where("barcode", "==", code));
             const snap = await getDocs(q);
+            if(snap.empty) return alert("Product not found!");
             
-            if(snap.empty) return alert("Not found!");
-            
-            currentProdId = snap.docs[0].id;
             document.getElementById('res-name').innerText = snap.docs[0].data().name;
-            resDiv.style.display = "block";
-        };
+            document.getElementById('result').style.display = "block";
+            window.currentProdId = snap.docs[0].id;
+        }
 
         document.getElementById('btn-sell').onclick = async () => {
-            const q = query(collection(db, "batches"), where("productId", "==", currentProdId), where("quantity", ">", 0), orderBy("expiryDate", "asc"), limit(1));
+            const q = query(collection(db, "batches"), where("productId", "==", window.currentProdId), where("quantity", ">", 0), orderBy("expiryDate", "asc"), limit(1));
             const bSnap = await getDocs(q);
-            if(bSnap.empty) return alert("Out of stock!");
-            
-            const batch = bSnap.docs[0];
-            await updateDoc(doc(db, "batches", batch.id), { quantity: batch.data().quantity - 1 });
+            if(bSnap.empty) return alert("Stock out!");
+            await updateDoc(doc(db, "batches", bSnap.docs[0].id), { quantity: bSnap.docs[0].data().quantity - 1 });
             alert("Sold!");
             location.reload();
         };

@@ -3,75 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scan & Sell</title>
+    <title>Scanner</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
 <body>
     <div class="container">
         <a href="index.html">← Back</a>
-        <h1>Barcode Scanner</h1>
-        
-        <div class="card" style="overflow: hidden;">
-            <video id="video" style="width: 100%; height: 250px; background: #000; border-radius: 10px;"></video>
-        </div>
-
+        <h1>Search & Sell</h1>
         <div class="card">
-            <input type="text" id="manual-code" placeholder="Manual Code Input">
-            <button id="btn-check" class="btn-primary">Search Product</button>
+            <input type="text" id="scan-input" placeholder="Enter Product Code">
+            <button onclick="search()" class="btn-primary">Search</button>
         </div>
-
-        <div id="result-box" class="card" style="display:none; border-top: 5px solid blue;">
-            <h2 id="p-name">Product Name</h2>
-            <p id="p-stock">Stock Info...</p>
-            <button id="btn-sell" class="btn-primary" style="background: red;">Sell 1 Unit</button>
+        <div id="res" class="card" style="display:none;">
+            <h2 id="res-name"></h2>
+            <p id="res-stock"></p>
+            <button onclick="sell()" class="btn-primary" style="background:red;">Sell 1 Unit</button>
         </div>
     </div>
 
-    <script type="module">
-        import { db } from './js/firebase.js';
-        import { collection, query, where, getDocs, updateDoc, doc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <script>
+        let foundProductId = null;
 
-        const codeReader = new ZXing.BrowserMultiFormatReader();
-        let selectedProdId = "";
+        function search() {
+            const code = document.getElementById('scan-input').value;
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            const p = products.find(x => x.code === code);
 
-        // Start Camera
-        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
-            if (result) {
-                document.getElementById('manual-code').value = result.text;
-                searchProduct(result.text);
-            }
-        });
-
-        async function searchProduct(code) {
-            const q = query(collection(db, "products"), where("barcode", "==", code));
-            const snap = await getDocs(q);
-            
-            if(snap.empty) return alert("এই কোডের কোনো প্রোডাক্ট প্রোফাইল নেই!");
-
-            selectedProdId = snap.docs[0].id;
-            document.getElementById('p-name').innerText = snap.docs[0].data().name;
-            document.getElementById('result-box').style.display = "block";
-            
-            // Check Stock
-            const bQuery = query(collection(db, "batches"), where("productId", "==", selectedProdId));
-            const bSnap = await getDocs(bQuery);
-            let total = 0;
-            bSnap.forEach(b => total += b.data().quantity);
-            document.getElementById('p-stock').innerText = "Total Stock: " + total;
+            if(p) {
+                foundProductId = p.id;
+                document.getElementById('res-name').innerText = p.name;
+                document.getElementById('res').style.display = "block";
+                
+                const batches = JSON.parse(localStorage.getItem('batches') || '[]');
+                const stock = batches.filter(b => b.productId == p.id).reduce((sum, b) => sum + b.quantity, 0);
+                document.getElementById('res-stock').innerText = "Stock: " + stock;
+            } else { alert("Not found!"); }
         }
 
-        document.getElementById('btn-check').onclick = () => searchProduct(document.getElementById('manual-code').value);
-
-        document.getElementById('btn-sell').onclick = async () => {
-            const q = query(collection(db, "batches"), where("productId", "==", selectedProdId), where("quantity", ">", 0), orderBy("expiryDate", "asc"), limit(1));
-            const snap = await getDocs(q);
-            if(snap.empty) return alert("স্টক নেই!");
+        function sell() {
+            let batches = JSON.parse(localStorage.getItem('batches') || '[]');
+            // FIFO Logic: Sort by date
+            batches.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
             
-            await updateDoc(doc(db, "batches", snap.docs[0].id), { quantity: snap.docs[0].data().quantity - 1 });
-            alert("১টি বিক্রি হয়েছে!");
-            location.reload();
-        };
+            const batchIndex = batches.findIndex(b => b.productId == foundProductId && b.quantity > 0);
+            if(batchIndex > -1) {
+                batches[batchIndex].quantity -= 1;
+                localStorage.setItem('batches', JSON.stringify(batches));
+                alert("Sold!");
+                search();
+            } else { alert("No Stock!"); }
+        }
     </script>
 </body>
 </html>

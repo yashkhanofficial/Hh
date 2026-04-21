@@ -1,41 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Stock</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
         <a href="index.html">← Back</a>
-        <h1>Add Stock</h1>
+        <h2>📦 Add Stock & Expiry</h2>
         <div class="card">
-            <select id="prod-select"></select>
+            <label>Select Item:</label>
+            <select id="p-select"></select>
+            <label>Expiry Date:</label>
             <input type="date" id="exp-date">
+            <label>Quantity:</label>
             <input type="number" id="qty" placeholder="Quantity">
-            <button onclick="addStock()" class="btn-primary">Add to Inventory</button>
+            <button onclick="addStockBatch()" class="btn-primary">Add to Inventory</button>
         </div>
     </div>
-
+    <script src="js/logic.js"></script>
     <script>
-        const products = JSON.parse(localStorage.getItem('products') || '[]');
-        const select = document.getElementById('prod-select');
-        
-        products.forEach(p => {
-            select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-        });
+        window.onload = () => {
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            const select = document.getElementById('p-select');
+            products.forEach(p => select.innerHTML += `<option value="${p.id}">${p.name}</option>`);
+        };
 
-        function addStock() {
+        function addStockBatch() {
+            const productId = document.getElementById('p-select').value;
+            const date = document.getElementById('exp-date').value;
+            const qty = parseInt(document.getElementById('qty').value);
+            if(!date || !qty) return alert("Fill all fields!");
+
             const batches = JSON.parse(localStorage.getItem('batches') || '[]');
-            const newBatch = {
-                id: Date.now(),
-                productId: select.value,
-                productName: select.options[select.selectedIndex].text,
-                expiryDate: document.getElementById('exp-date').value,
-                quantity: parseInt(document.getElementById('qty').value)
-            };
-            batches.push(newBatch);
+            batches.push({ id: Date.now(), productId, expiryDate: date, quantity: qty });
             localStorage.setItem('batches', JSON.stringify(batches));
             alert("Stock Added!");
             window.location.href = "index.html";

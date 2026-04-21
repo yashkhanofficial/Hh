@@ -3,58 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Profile</title>
+    <title>Create Product</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-        <a href="index.html">← Dashboard</a>
-        <h1>Create Product Profile</h1>
+        <a href="index.html">← Back</a>
+        <h1>New Product Profile</h1>
         <div class="card">
-            <label>Product Name:</label>
-            <input type="text" id="prod-name" placeholder="যেমন: মশা মারার স্প্রে">
-            
-            <label>Product Code / Barcode:</label>
-            <input type="text" id="prod-barcode" placeholder="যেমন: 123456">
-            
-            <button id="btn-save-prod" class="btn-primary">Save Profile</button>
+            <input type="text" id="p-name" placeholder="Product Name">
+            <input type="text" id="p-code" placeholder="Barcode/Code">
+            <button onclick="saveProduct()" class="btn-primary">Save Product</button>
         </div>
-
-        <h3>Registered Products:</h3>
-        <div id="product-list"></div>
+        <div id="p-list"></div>
     </div>
 
-    <script type="module">
-        import { db } from './js/firebase.js';
-        import { collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <script>
+        function saveProduct() {
+            const name = document.getElementById('p-name').value;
+            const code = document.getElementById('p-code').value;
+            if(!name || !code) return alert("Fill all fields");
 
-        const btnSave = document.getElementById('btn-save-prod');
-
-        btnSave.onclick = async () => {
-            const name = document.getElementById('prod-name').value;
-            const code = document.getElementById('prod-barcode').value;
-
-            if(!name || !code) return alert("নাম এবং কোড দুটোই দিন!");
-
-            try {
-                await addDoc(collection(db, "products"), {
-                    name: name,
-                    barcode: code,
-                    createdAt: new Date()
-                });
-                alert("প্রোফাইল সেভ হয়েছে!");
-                location.reload();
-            } catch (e) { alert("Error: " + e.message); }
-        };
-
-        async function load() {
-            const snap = await getDocs(collection(db, "products"));
-            const list = document.getElementById('product-list');
-            snap.forEach(doc => {
-                list.innerHTML += `<div class="card"><b>${doc.data().name}</b> (Code: ${doc.data().barcode})</div>`;
-            });
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            products.push({ id: Date.now(), name, code });
+            localStorage.setItem('products', JSON.stringify(products));
+            alert("Saved!");
+            location.reload();
         }
-        load();
     </script>
 </body>
 </html>
